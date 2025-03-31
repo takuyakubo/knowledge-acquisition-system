@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - ENV=development
+    command: python -m src.api.main
+
+  ui:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - ENV=development
+      - API_HOST=api
+      - API_PORT=8000
+    command: streamlit run src/ui/app.py
+    depends_on:
+      - api
