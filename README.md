@@ -119,10 +119,6 @@ knowledge-acquisition-system/
 
 プロジェクトへの貢献を歓迎します。貢献方法については[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
 
-## ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。詳細は[LICENSE](LICENSE)ファイルを参照してください。
-
 ## 変更履歴
 
 プロジェクトの変更履歴については[CHANGELOG.md](CHANGELOG.md)を参照してください。
