@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
-from src.common.logger import setup_logger
-from src.common.config import API_HOST, API_PORT
+from common.logger import setup_logger
+from common.config import API_HOST, API_PORT
 
 # ロガーの設定
 logger = setup_logger("ui")

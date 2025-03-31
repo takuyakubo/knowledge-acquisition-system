@@ -21,6 +21,7 @@ services:
       - ENV=development
       - API_HOST=api
       - API_PORT=8000
+      - PYTHONPATH=/app/src
     command: streamlit run src/ui/app.py
     depends_on:
       - api
