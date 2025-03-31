@@ -1,0 +1,33 @@
+# API Framework
+fastapi==0.103.1
+uvicorn==0.23.2
+
+# UI
+streamlit==1.26.0
+
+# LLM & Processing
+langchain==0.0.267
+openai==0.28.0
+
+# Data Processing
+pandas==2.1.0
+numpy==1.25.2
+pydantic==2.3.0
+
+# Vector Database
+faiss-cpu==1.7.4
+chromadb==0.4.13
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0
+tqdm==4.66.1
+
+# Testing
+pytest==7.4.0
+pytest-cov==4.1.0
+
+# Linting
+flake8==6.1.0
+black==23.7.0
+isort==5.12.0
