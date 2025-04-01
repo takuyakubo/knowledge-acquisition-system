@@ -59,12 +59,51 @@ knowledge-acquisition-system/
 
 ### テスト
 
-テスト実行:
+### テスト実行
+
+全テスト実行:
 ```
 pytest
 ```
 
-コードスタイルチェック:
+特定ディレクトリのテスト実行:
+```
+pytest tests/unit/
+pytest tests/integration/
+```
+
+特定のモジュールテスト実行:
+```
+pytest tests/unit/data_collection/
+```
+
+### テスト構造
+
+```
+tests/
+├── unit/                 # 単体テスト
+│   ├── data_collection/  # データ収集モジュールテスト
+│   ├── knowledge_extraction/ # 知識抽出モジュールテスト
+│   └── ...
+├── integration/          # 統合テスト
+│   ├── data_flow/        # データフロー統合テスト
+│   └── api/              # API統合テスト
+├── fixtures/             # テストフィクスチャ
+│   ├── responses/        # モックAPIレスポンス
+│   └── documents/        # サンプルデータ
+└── conftest.py           # pytest共通設定
+```
+
+### テスト設計指針
+
+- **単体テスト**: 各クラスや関数の独立した機能を検証
+- **統合テスト**: モジュール間の相互作用やデータフローを検証
+- **モック活用**: 外部依存（API、DB等）をモックして分離テスト
+- **パラメータ化**: 様々な入力パターンを効率的にテスト
+- **非同期テスト**: `pytest.mark.asyncio`で非同期関数をテスト
+
+### コードスタイルチェック
+
 ```
 flake8
 black --check .
@@ -175,6 +214,64 @@ class ArxivConnectorInterface(AcademicDataConnector):
     async def extract_entities(self, arxiv_id: str, segments: Optional[List[Segment]] = None) -> List[Entity]: ...
 ```
 
+### arXivコネクタのテスト
+
+```python
+# 単体テスト
+class TestArxivConnector:
+    @pytest.fixture
+    def arxiv_connector(self):
+        # モック依存関係を設定
+        db_mock = MagicMock()
+        vector_db_mock = MagicMock()
+        storage_mock = MagicMock()
+        
+        # テスト用の一時ディレクトリを使用するよう設定
+        with patch('os.makedirs'):
+            with patch('src.common.config.get_config') as mock_get_config:
+                mock_get_config.return_value = {'data_dir': '/tmp/test_data'}
+                return ArxivConnector(db_connection=db_mock, vector_db_client=vector_db_mock)
+    
+    @pytest.mark.asyncio
+    async def test_search_papers(self, arxiv_connector):
+        # search_papers()メソッドのテスト実装
+        # 将来実装される関数の動作を検証
+        ...
+
+# 統合テスト
+@pytest.mark.asyncio
+class TestArxivDataFlow:
+    @pytest.fixture
+    async def mock_arxiv_connector(self):
+        # モック化されたarXivコネクタを提供するフィクスチャ
+        # 実際のAPIを呼び出さずにテストできるようにするためのモック
+        connector = ArxivConnector()
+        
+        # APIレスポンスをモック化
+        sample_papers = [
+            {
+                "id": "2301.12345",
+                "title": "Quantum Machine Learning Applications",
+                "authors": ["Alice Smith", "Bob Johnson"],
+                # ... その他のフィールド
+            }
+        ]
+        
+        # 各メソッドをモック実装
+        connector.search_papers = AsyncMock(return_value=sample_papers)
+        connector.download_pdf = AsyncMock(...)
+        connector.extract_text_from_pdf = AsyncMock(...)
+        
+        return connector
+    
+    async def test_complete_paper_processing_flow(self, mock_arxiv_connector):
+        # 論文処理の完全なフローをテスト
+        papers = await mock_arxiv_connector.search_papers(query="quantum")
+        assert len(papers) == 1
+        assert papers[0]["id"] == "2301.12345"
+        # ... 以降のデータフローをテスト
+```
+
 ## API概要
 
 - `/collect` - データ収集ジョブの開始
@@ -202,6 +299,11 @@ class ArxivConnectorInterface(AcademicDataConnector):
    - Pydanticによる強力な型チェックとバリデーション
    - モデル間の関係整合性の保証
 
+5. **テスト駆動開発**:
+   - インターフェース実装前にテストを先行して作成
+   - モックとスタブを活用した依存関係の分離
+   - 単体テストと統合テストの使い分け
+
 ## 開発TODO
 
 - [x] プロジェクト初期構築
@@ -209,10 +311,11 @@ class ArxivConnectorInterface(AcademicDataConnector):
 - [x] UI基本画面実装
 - [x] データモデル設計（Pydantic）
 - [x] インターフェース設計
-- [ ] データ収集コネクタ実装
+- [x] テスト基盤整備（単体/統合テスト）
+- [ ] arXivコネクタ実装
 - [ ] ベクトル検索機能実装
 - [ ] 知識グラフ構築
-- [ ] テスト拡充
+- [ ] Web情報収集コネクタ実装
 
 ## デプロイ方法
 
