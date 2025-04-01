@@ -100,7 +100,34 @@ tests/
 - **統合テスト**: モジュール間の相互作用やデータフローを検証
 - **モック活用**: 外部依存（API、DB等）をモックして分離テスト
 - **パラメータ化**: 様々な入力パターンを効率的にテスト
-- **非同期テスト**: `pytest.mark.asyncio`で非同期関数をテスト
+- **非同期テスト**: `pytest-asyncio`プラグインを使用して非同期関数をテスト
+  - `@pytest.mark.asyncio`でテスト関数を装飾
+  - `@pytest_asyncio.fixture`で非同期フィクスチャを定義
+
+### 非同期テストの実装
+
+```python
+# 非同期テスト用プラグイン
+import pytest
+import pytest_asyncio
+from unittest.mock import AsyncMock
+
+# 非同期テストクラス
+@pytest.mark.asyncio
+class TestAsyncClass:
+    # 非同期フィクスチャ
+    @pytest_asyncio.fixture
+    async def async_fixture(self):
+        # 非同期のセットアップコード
+        result = await some_async_operation()
+        return result
+    
+    # 非同期テストメソッド
+    async def test_async_method(self, async_fixture):
+        # テストロジック
+        result = await some_other_async_operation()
+        assert result == expected_value
+```
 
 ### コードスタイルチェック
 
@@ -208,10 +235,31 @@ class ArxivConnectorInterface(AcademicDataConnector):
     async def search_papers(self, query: str, category: Optional[str] = None, date_from: Optional[str] = None, date_to: Optional[str] = None, max_results: int = 100) -> List[Dict[str, Any]]: ...
     
     @abstractmethod
+    async def get_paper_by_id(self, arxiv_id: str) -> Dict[str, Any]: ...
+    
+    @abstractmethod
+    async def collect_papers(self, query: str, category: Optional[str] = None, date_from: Optional[str] = None, date_to: Optional[str] = None, max_results: int = 100) -> List[Dict[str, Any]]: ...
+    
+    @abstractmethod
     async def download_pdf(self, arxiv_id: str, target_path: Optional[str] = None) -> str: ...
     
     @abstractmethod
+    async def extract_text_from_pdf(self, pdf_path: str) -> str: ...
+    
+    @abstractmethod
+    async def segment_paper(self, arxiv_id: str, text_content: Optional[str] = None) -> List[Segment]: ...
+    
+    @abstractmethod
     async def extract_entities(self, arxiv_id: str, segments: Optional[List[Segment]] = None) -> List[Entity]: ...
+    
+    @abstractmethod
+    async def extract_relations(self, arxiv_id: str, entities: Optional[List[Entity]] = None) -> List[Relation]: ...
+    
+    @abstractmethod
+    async def get_paper_metadata(self, arxiv_id: str) -> Dict[str, Any]: ...
+    
+    @abstractmethod
+    async def get_vector_embeddings(self, arxiv_id: str) -> Dict[str, List[float]]: ...
 ```
 
 ### arXivコネクタのテスト
@@ -241,11 +289,15 @@ class TestArxivConnector:
 # 統合テスト
 @pytest.mark.asyncio
 class TestArxivDataFlow:
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def mock_arxiv_connector(self):
         # モック化されたarXivコネクタを提供するフィクスチャ
         # 実際のAPIを呼び出さずにテストできるようにするためのモック
-        connector = ArxivConnector()
+        with patch('os.makedirs'):
+            with patch('src.common.config.get_config') as mock_get_config:
+                # 設定をモック化
+                mock_get_config.return_value = {'data_dir': '/tmp/test_data'}
+                connector = ArxivConnector()
         
         # APIレスポンスをモック化
         sample_papers = [
@@ -253,14 +305,46 @@ class TestArxivDataFlow:
                 "id": "2301.12345",
                 "title": "Quantum Machine Learning Applications",
                 "authors": ["Alice Smith", "Bob Johnson"],
-                # ... その他のフィールド
+                "summary": "This paper explores quantum computing applications in machine learning...",
+                "published": "2023-01-15",
+                "updated": "2023-01-20",
+                "categories": ["cs.AI", "quant-ph"],
+                "pdf_url": "https://arxiv.org/pdf/2301.12345"
             }
         ]
         
+        # search_papers のモック実装
+        async def mock_search_papers(*args, **kwargs):
+            return sample_papers
+        
         # 各メソッドをモック実装
-        connector.search_papers = AsyncMock(return_value=sample_papers)
-        connector.download_pdf = AsyncMock(...)
-        connector.extract_text_from_pdf = AsyncMock(...)
+        connector.search_papers = AsyncMock(side_effect=mock_search_papers)
+        connector.download_pdf = AsyncMock(return_value="/tmp/test_data/raw/arxiv/2301.12345.pdf")
+        connector.extract_text_from_pdf = AsyncMock(return_value="Sample text content...")
+        
+        # セグメント化のモック
+        async def mock_segment_paper(arxiv_id, text_content=None):
+            segments = [
+                Segment(
+                    segment_id=uuid4(),
+                    document_id=UUID('11111111-1111-1111-1111-111111111111'),
+                    content="Abstract content",
+                    segment_type="abstract",
+                    position=0,
+                    metadata={"source": "arxiv", "paper_id": arxiv_id}
+                ),
+                Segment(
+                    segment_id=uuid4(),
+                    document_id=UUID('11111111-1111-1111-1111-111111111111'),
+                    content="Introduction content",
+                    segment_type="introduction",
+                    position=1,
+                    metadata={"source": "arxiv", "paper_id": arxiv_id}
+                )
+            ]
+            return segments
+            
+        connector.segment_paper = AsyncMock(side_effect=mock_segment_paper)
         
         return connector
     
@@ -269,7 +353,22 @@ class TestArxivDataFlow:
         papers = await mock_arxiv_connector.search_papers(query="quantum")
         assert len(papers) == 1
         assert papers[0]["id"] == "2301.12345"
-        # ... 以降のデータフローをテスト
+        
+        # 最初の論文を処理
+        paper_id = papers[0]["id"]
+        
+        # PDFをダウンロード
+        pdf_path = await mock_arxiv_connector.download_pdf(paper_id)
+        assert pdf_path.endswith(f"{paper_id}.pdf")
+        
+        # テキストを抽出
+        text_content = await mock_arxiv_connector.extract_text_from_pdf(pdf_path)
+        
+        # テキストをセグメント化
+        segments = await mock_arxiv_connector.segment_paper(paper_id, text_content)
+        assert len(segments) == 2
+        assert segments[0].segment_type == "abstract"
+        assert segments[1].segment_type == "introduction"
 ```
 
 ## API概要
@@ -294,6 +393,7 @@ class TestArxivDataFlow:
 3. **非同期処理**:
    - asyncioを活用した効率的な非同期IO処理
    - リトライ機能付きAPI呼び出し
+   - 適切な例外処理と伝播
 
 4. **データバリデーション**:
    - Pydanticによる強力な型チェックとバリデーション
@@ -303,6 +403,15 @@ class TestArxivDataFlow:
    - インターフェース実装前にテストを先行して作成
    - モックとスタブを活用した依存関係の分離
    - 単体テストと統合テストの使い分け
+
+6. **ユーティリティ関数の実装**:
+   - `get_logger`関数: モジュールごとのログ管理
+   - `get_config`関数: 設定情報の一元管理
+
+7. **Pydanticモデルの最新スタイル対応**:
+   - Pydantic v2形式でのモデル定義
+   - `model_config = ConfigDict()`を使用したメタデータ設定
+   - バリデーターとエニュメレーション型の活用
 
 ## 開発TODO
 
