@@ -2,6 +2,11 @@ import logging
 import os
 import sys
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+# 基本設定
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+LOG_DIR = os.path.join(BASE_DIR, "logs")
 
 def setup_logger(name, log_file=None, level=logging.INFO):
     """ロガーのセットアップ関数
@@ -34,6 +39,25 @@ def setup_logger(name, log_file=None, level=logging.INFO):
             logger.addHandler(file_handler)
     
     return logger
+
+def get_logger(name):
+    """モジュール用のロガーを取得する
+
+    Args:
+        name (str): モジュール名
+
+    Returns:
+        logging.Logger: 設定済みロガーオブジェクト
+    """
+    # ログディレクトリを作成
+    os.makedirs(LOG_DIR, exist_ok=True)
+    
+    # モジュールごとのログファイルパスを構築
+    module_name = name.split('.')[-1]
+    log_file = os.path.join(LOG_DIR, f"{module_name}.log")
+    
+    # ロガーを設定して返す
+    return setup_logger(name, log_file)
 
 # デフォルトロガー
 default_logger = setup_logger('knowledge_acquisition')

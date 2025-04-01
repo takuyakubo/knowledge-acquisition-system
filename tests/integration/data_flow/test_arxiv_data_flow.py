@@ -6,6 +6,7 @@ arXivコネクタのデータフロー統合テスト
 
 import os
 import pytest
+import pytest_asyncio
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID, uuid4
@@ -27,7 +28,7 @@ from src.knowledge_extraction.entity_model import (
 class TestArxivDataFlow:
     """arXivコネクタを使ったデータフロー統合テスト"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def mock_arxiv_connector(self):
         """
         モック化されたarXivコネクタを提供するフィクスチャ
@@ -110,7 +111,7 @@ class TestArxivDataFlow:
                             segment_id=uuid4(),
                             document_id=UUID('11111111-1111-1111-1111-111111111111'),
                             content=text_content[50:] if len(text_content) > 50 else "Additional content",
-                            segment_type="body",
+                            segment_type="introduction",
                             position=1,
                             metadata={"source": "arxiv", "paper_id": arxiv_id}
                         )
@@ -211,7 +212,7 @@ class TestArxivDataFlow:
         segments = await mock_arxiv_connector.segment_paper(paper_id, text_content)
         assert len(segments) == 2
         assert segments[0].segment_type == "abstract"
-        assert segments[1].segment_type == "body"
+        assert segments[1].segment_type == "introduction"
         
         # 5. エンティティを抽出
         entities = await mock_arxiv_connector.extract_entities(paper_id, segments)

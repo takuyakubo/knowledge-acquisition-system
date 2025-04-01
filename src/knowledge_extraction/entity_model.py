@@ -165,22 +165,9 @@ class Segment(BaseModel):
 
 class Entity(BaseModel):
     """抽出された知識エンティティを表現するモデル"""
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    
-    entity_id: UUID = Field(default_factory=uuid4)
-    name: str
-    entity_type: EntityType
-    aliases: List[str] = Field(default_factory=list)
-    description: Optional[str] = None
-    source_segments: List[UUID] = Field(default_factory=list)
-    confidence: float = Field(ge=0.0, le=1.0)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    vector_embedding: Optional[VectorEmbedding] = None
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_schema_extra={
             "example": {
                 "entity_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
                 "name": "Transformer",
@@ -196,11 +183,41 @@ class Entity(BaseModel):
                 }
             }
         }
+    )
+    
+    entity_id: UUID = Field(default_factory=uuid4)
+    name: str
+    entity_type: EntityType
+    aliases: List[str] = Field(default_factory=list)
+    description: Optional[str] = None
+    source_segments: List[UUID] = Field(default_factory=list)
+    confidence: float = Field(ge=0.0, le=1.0)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    vector_embedding: Optional[VectorEmbedding] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
 
 class Relation(BaseModel):
     """エンティティ間の関係を表現するモデル"""
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_schema_extra={
+            "example": {
+                "relation_id": "a1b2c3d4-e5f6-4a5b-9c7d-8e9f0a1b2c3d",
+                "source_entity_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                "target_entity_id": "11223344-5566-7788-99aa-bbccddeeff00",
+                "relation_type": "based_on",
+                "description": "Transformerアーキテクチャは自己注意機構に基づいている",
+                "confidence": 0.9,
+                "metadata": {
+                    "first_observed": "2017-06-12",
+                    "citation_count": 45,
+                    "importance": "high"
+                }
+            }
+        }
+    )
     
     relation_id: UUID = Field(default_factory=uuid4)
     source_entity_id: UUID
@@ -218,23 +235,6 @@ class Relation(BaseModel):
         if self.source_entity_id == self.target_entity_id:
             raise ValueError("Source and target entities must be different")
         return self
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "relation_id": "a1b2c3d4-e5f6-4a5b-9c7d-8e9f0a1b2c3d",
-                "source_entity_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-                "target_entity_id": "11223344-5566-7788-99aa-bbccddeeff00",
-                "relation_type": "based_on",
-                "description": "Transformerアーキテクチャは自己注意機構に基づいている",
-                "confidence": 0.9,
-                "metadata": {
-                    "first_observed": "2017-06-12",
-                    "citation_count": 45,
-                    "importance": "high"
-                }
-            }
-        }
 
 
 class AnalysisType(str, Enum):

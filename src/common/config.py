@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Dict, Any
 from dotenv import load_dotenv
 
 # .envファイルの読み込み
@@ -26,6 +27,28 @@ VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH", os.path.join(DATA_DIR, "vector_stor
 # LLM設定
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
+
+# 設定取得関数
+def get_config() -> Dict[str, Any]:
+    """設定情報を取得する
+
+    Returns:
+        Dict[str, Any]: 設定情報の辞書
+    """
+    return {
+        "base_dir": str(BASE_DIR),
+        "log_dir": LOG_DIR,
+        "data_dir": DATA_DIR,
+        "api_host": API_HOST,
+        "api_port": API_PORT,
+        "env": ENV,
+        "db_type": DB_TYPE,
+        "db_path": DB_PATH,
+        "vector_db_type": VECTOR_DB_TYPE,
+        "vector_db_path": VECTOR_DB_PATH,
+        "llm_api_key": LLM_API_KEY,
+        "llm_model": LLM_MODEL
+    }
 
 # 初期化関数
 def init_directories():
