@@ -1,0 +1,50 @@
+{
+  "papers": [
+    {
+      "id": "2301.12345",
+      "title": "Quantum Machine Learning Applications",
+      "authors": ["Alice Smith", "Bob Johnson"],
+      "summary": "This paper explores quantum computing applications in machine learning, focusing on how quantum algorithms can provide advantages for specific machine learning tasks. We demonstrate several quantum machine learning algorithms and evaluate their performance against classical counterparts, showing significant speedups for certain problem classes.",
+      "published": "2023-01-15",
+      "updated": "2023-01-20",
+      "categories": ["cs.AI", "quant-ph"],
+      "pdf_url": "https://arxiv.org/pdf/2301.12345",
+      "abstract_url": "https://arxiv.org/abs/2301.12345",
+      "journal_ref": null,
+      "doi": null,
+      "comment": "25 pages, 8 figures, 3 tables"
+    },
+    {
+      "id": "2302.54321",
+      "title": "Deep Learning for Quantum Systems",
+      "authors": ["Carol Williams", "David Brown"],
+      "summary": "We present a novel deep learning approach for quantum systems that combines transformer architectures with quantum-specific inductive biases. Our model is capable of predicting quantum system dynamics with high accuracy while requiring significantly less training data than previous approaches. We evaluate on several standard quantum simulation benchmarks and achieve state-of-the-art results.",
+      "published": "2023-02-10",
+      "updated": "2023-02-15",
+      "categories": ["cs.LG", "quant-ph"],
+      "pdf_url": "https://arxiv.org/pdf/2302.54321",
+      "abstract_url": "https://arxiv.org/abs/2302.54321",
+      "journal_ref": "Quantum Machine Intelligence, vol. 5, no. 1, 2023",
+      "doi": "10.1007/s42484-023-00075-x",
+      "comment": "18 pages, 5 figures, accepted to QMI"
+    },
+    {
+      "id": "2304.67890",
+      "title": "Benchmarking Quantum Machine Learning Algorithms",
+      "authors": ["Eve Thompson", "Frank Miller", "Grace Lee"],
+      "summary": "As quantum machine learning (QML) continues to develop, standardized benchmarks are needed to compare different approaches. We propose a comprehensive benchmark suite for QML algorithms, covering a range of problem types and data distributions. Using this suite, we evaluate several leading QML algorithms and provide insights into their strengths and weaknesses across different application domains.",
+      "published": "2023-04-05",
+      "updated": "2023-04-12",
+      "categories": ["quant-ph", "cs.LG", "cs.AI"],
+      "pdf_url": "https://arxiv.org/pdf/2304.67890",
+      "abstract_url": "https://arxiv.org/abs/2304.67890",
+      "journal_ref": null,
+      "doi": null,
+      "comment": "32 pages, 12 figures, 6 tables, code available at https://github.com/qml-benchmark"
+    }
+  ],
+  "total_results": 148,
+  "start": 0,
+  "max_results": 3,
+  "query": "quantum machine learning"
+}
